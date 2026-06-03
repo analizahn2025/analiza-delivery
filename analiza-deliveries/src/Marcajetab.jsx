@@ -69,25 +69,25 @@ const alertaSelectStyles = {
 };
 
 const motivosDemora = [
-  { value: 'Muestras en centrifuga 10', label: 'Muestras en centrifuga 10' },
-  { value: 'Muestras en centrifuga 15', label: 'Muestras en centrifuga 15' },
-  { value: 'Muestras en centrifuga 20', label: 'Muestras en centrifuga 20' },
-  { value: 'Esperando Muestra de Emergencia', label: 'Esperando Muestra de Emergencia' },
-  { value: 'Esperando Muestra de Clinica Referidas', label: 'Esperando Muestra de Clinica Referidas' },
-  { value: 'Solo un Tecnico en Sucursal', label: 'Solo un Tecnico en Sucursal' },
-  { value: 'Esperando Documentacion en Sucursal', label: 'Esperando Documentacion en Sucursal' },
-  { value: 'Esperando entrega de Envio', label: 'Esperando entrega de Envio' },
-  { value: 'Esperando Muestras en CP de Ciudad Nueva', label: 'Esperando Muestras en CP de Ciudad Nueva' },
-  { value: 'Esperando Envio para Sucursales CD', label: 'Esperando Envio para Sucursales CD' },
-  { value: 'Esperando envio para Sucursales.', label: 'Esperando envio para Sucursales.' },
-  { value: 'Esperando envio de Areas', label: 'Esperando envio de Areas' },
-  { value: 'Realizando Envio de Area', label: 'Realizando Envio de Area' },
-  { value: 'Esperando Envio Foraneo', label: 'Esperando Envio Foraneo' },
-  { value: 'Entregando Documentacion en Sucursal', label: 'Entregando Documentacion en Sucursal' },
-  { value: 'Entregando Muestras y Documentacion areas', label: 'Entregando Muestras y Documentacion areas' },
-  { value: 'Realizando Domicilio de Zona', label: 'Realizando Domicilio de Zona' },
-  { value: 'No tengo muestra en Ruta', label: 'No tengo muestra en Ruta' },
-];
+  "Muestras en centrifuga 10'",
+  "Muestras en centrifuga 15'",
+  "Muestras en centrifuga 20'",
+  "Esperando Muestra de Emergencia",
+  "Esperando Muestra de Clinica Referidas",
+  "Solo un Tecnico en Sucursal",
+  "Esperando Documentacion en Sucursal",
+  "Esperando entrega de Envio",
+  "Esperando Muestras en CP de Ciudad Nueva",
+  "Esperando Envio para Sucursales CD",
+  "Esperando envio para Sucursales.",
+  "Esperando envio de Areas",
+  "Realizando Envio de Area",
+  "Esperando Envio Foraneo",
+  "Entregando Documentacion en Sucursal",
+  "Entregando Muestras y Documentacion areas",
+  "Realizando Domicilio de Zona",
+  "No tengo muestra en Ruta",
+].map((motivo) => ({ value: motivo, label: motivo }));
 
 const okSelectStyles = {
   ...selectStyles,
@@ -116,6 +116,7 @@ export default function MarcajeTab({
   const [loadingEntrada, setLoadingEntrada] = useState(false);
   const [loadingSalida, setLoadingSalida]   = useState(false);
   const [motivoDemora, setMotivoDemora] = useState(null);
+  const [ahoraMs, setAhoraMs] = useState(Date.now());
 
   const timerRef = useRef(null);
 
@@ -132,6 +133,12 @@ export default function MarcajeTab({
     },
     [],
   );
+
+  useEffect(() => {
+    setAhoraMs(Date.now());
+    const id = setInterval(() => setAhoraMs(Date.now()), 30000);
+    return () => clearInterval(id);
+  }, [estadoGlobal?.fecha_hora, estadoGlobal?.tipo_marcaje]);
 
   // Auto-seleccionar padre + hijo cuando hay una parada activa en un hijo (envío salida)
   // Así el motorista no tiene que buscar la clínica exacta para marcar salida.
@@ -152,7 +159,7 @@ export default function MarcajeTab({
 
   const ultimaFechaMarcaje = estadoGlobal?.fecha_hora ? new Date(estadoGlobal.fecha_hora) : null;
   const minutosDesdeUltimoMarcaje = ultimaFechaMarcaje
-    ? Math.floor((Date.now() - ultimaFechaMarcaje.getTime()) / 60000)
+    ? Math.floor((ahoraMs - ultimaFechaMarcaje.getTime()) / 60000)
     : 0;
   const requiereMotivoDemora =
     tipo === "recoleccion" &&
@@ -160,7 +167,8 @@ export default function MarcajeTab({
     !recoleccionActiva &&
     !enviosActivo &&
     !almuerzoActivo &&
-    ["salida", "fin_jornada"].includes(estadoGlobal?.tipo_marcaje) &&
+    estadoGlobal?.tipo_actividad === "recoleccion" &&
+    estadoGlobal?.tipo_marcaje === "salida" &&
     minutosDesdeUltimoMarcaje >= 10;
 
   useEffect(() => {

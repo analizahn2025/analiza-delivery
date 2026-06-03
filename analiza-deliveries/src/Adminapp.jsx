@@ -89,7 +89,7 @@ export default function AdminApp({ user, onLogout }) {
     setLoadingExcel(false);
     if (!r.success) { alert("Error: " + r.error); return; }
 
-    const headers = ["Motorista","Zona","Tipo Actividad","Ubicación","Tipo Marcaje","Fecha","Hora","T. Sucursal","T. Ruta","T. Almuerzo","Espera"];
+    const headers = ["Motorista","Zona","Tipo Actividad","Ubicación","Tipo Marcaje","Fecha","Hora","T. Sucursal","T. Ruta","T. Almuerzo","Espera","Motivo Demora"];
     const wsData = [
       headers,
       ...r.data.map((row) => [
@@ -97,11 +97,12 @@ export default function AdminApp({ user, onLogout }) {
         row.tipo_marcaje, row.fecha, row.hora,
         toExcelTime(row.tiempo_sucursal), toExcelTime(row.tiempo_ruta),
         toExcelTime(row.tiempo_almuerzo), toExcelTime(row.espera),
+        row.motivo_demora || "",
       ]),
     ];
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(wsData);
-    ws["!cols"] = [25,15,15,30,12,12,10,12,10,12,10].map((w) => ({ wch: w }));
+    ws["!cols"] = [25,15,15,30,12,12,10,12,10,12,10,36].map((w) => ({ wch: w }));
     ws["!autofilter"] = { ref: ws["!ref"] };
 
     const TIME_COLS = [7, 8, 9, 10];
@@ -422,7 +423,7 @@ export default function AdminApp({ user, onLogout }) {
                   </div>
 
                   <div style={{ overflowX: "auto" }}>
-                    <table className="report-table" style={{ minWidth: 680 }}>
+                    <table className="report-table" style={{ minWidth: 820 }}>
                       <thead>
                         <tr>
                           <th>Motorista</th>
@@ -430,6 +431,7 @@ export default function AdminApp({ user, onLogout }) {
                           <th>Actividad</th>
                           <th>Sucursal</th>
                           <th>Evento</th>
+                          <th>Motivo demora</th>
                           <th style={{ textAlign: "right" }}>Fecha</th>
                           <th style={{ textAlign: "right" }}>Hora</th>
                         </tr>
@@ -441,7 +443,7 @@ export default function AdminApp({ user, onLogout }) {
                               <tr key={i} className="fin_jornada">
                                 <td style={{ fontWeight: 500, color: "var(--gray-700)" }}>{m.nombre_completo}</td>
                                 <td style={{ color: "var(--gray-500)" }}>{m.zona}</td>
-                                <td colSpan={3} style={{ color: "var(--gray-500)", fontSize: 13 }}>
+                                <td colSpan={4} style={{ color: "var(--gray-500)", fontSize: 13 }}>
                                   <i className="fa-solid fa-lock" style={{ marginRight: 6, fontSize: 10 }} />
                                   Fin de Jornada
                                 </td>
@@ -461,6 +463,7 @@ export default function AdminApp({ user, onLogout }) {
                                   {m.tipo_marcaje === "entrada" ? "Inicio" : "Fin"}
                                 </span>
                               </td>
+                              <td style={{ color: "var(--gray-600)", fontSize: 13 }}>{m.motivo_demora || "—"}</td>
                               <td style={{ textAlign: "right", color: "var(--gray-600)", fontSize: 13 }}>{formatFecha(m.fecha_hora)}</td>
                               <td style={{ textAlign: "right" }}>{formatHoraHN(m.fecha_hora)}</td>
                             </tr>

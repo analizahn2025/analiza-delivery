@@ -729,6 +729,7 @@ export async function getDataParaExcel({
           tiempo_sucursal: "",
           tiempo_ruta: "",
           tiempo_almuerzo: "",
+          motivo_demora: m.motivo_demora || "",
         });
       } else {
         rows.push({
@@ -753,6 +754,7 @@ export async function getDataParaExcel({
             m.tipo_actividad === "almuerzo" ? "" : (m.tiempo_en_ruta ?? ""),
           tiempo_almuerzo:
             m.tipo_actividad === "almuerzo" ? (m.tiempo_en_ruta ?? "") : "",
+          motivo_demora: m.motivo_demora || "",
         });
       }
     });
