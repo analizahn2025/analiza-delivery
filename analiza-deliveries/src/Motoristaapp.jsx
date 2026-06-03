@@ -107,6 +107,7 @@ export default function MotoristaApp({ user, onLogout }) {
   const tabProps = (tipo) => ({
     tipo,
     ubicaciones: tipo === "recoleccion" ? ubicRecoleccion : ubicEnvios,
+    estadoGlobal,
     estadoRecoleccion,
     estadoEnvio,
     recoleccionActiva,

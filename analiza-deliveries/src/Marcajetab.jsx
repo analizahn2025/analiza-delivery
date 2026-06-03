@@ -68,6 +68,27 @@ const alertaSelectStyles = {
   }),
 };
 
+const motivosDemora = [
+  { value: 'Muestras en centrifuga 10', label: 'Muestras en centrifuga 10' },
+  { value: 'Muestras en centrifuga 15', label: 'Muestras en centrifuga 15' },
+  { value: 'Muestras en centrifuga 20', label: 'Muestras en centrifuga 20' },
+  { value: 'Esperando Muestra de Emergencia', label: 'Esperando Muestra de Emergencia' },
+  { value: 'Esperando Muestra de Clinica Referidas', label: 'Esperando Muestra de Clinica Referidas' },
+  { value: 'Solo un Tecnico en Sucursal', label: 'Solo un Tecnico en Sucursal' },
+  { value: 'Esperando Documentacion en Sucursal', label: 'Esperando Documentacion en Sucursal' },
+  { value: 'Esperando entrega de Envio', label: 'Esperando entrega de Envio' },
+  { value: 'Esperando Muestras en CP de Ciudad Nueva', label: 'Esperando Muestras en CP de Ciudad Nueva' },
+  { value: 'Esperando Envio para Sucursales CD', label: 'Esperando Envio para Sucursales CD' },
+  { value: 'Esperando envio para Sucursales.', label: 'Esperando envio para Sucursales.' },
+  { value: 'Esperando envio de Areas', label: 'Esperando envio de Areas' },
+  { value: 'Realizando Envio de Area', label: 'Realizando Envio de Area' },
+  { value: 'Esperando Envio Foraneo', label: 'Esperando Envio Foraneo' },
+  { value: 'Entregando Documentacion en Sucursal', label: 'Entregando Documentacion en Sucursal' },
+  { value: 'Entregando Muestras y Documentacion areas', label: 'Entregando Muestras y Documentacion areas' },
+  { value: 'Realizando Domicilio de Zona', label: 'Realizando Domicilio de Zona' },
+  { value: 'No tengo muestra en Ruta', label: 'No tengo muestra en Ruta' },
+];
+
 const okSelectStyles = {
   ...selectStyles,
   control: (base, state) => ({
@@ -79,6 +100,7 @@ const okSelectStyles = {
 export default function MarcajeTab({
   tipo,
   ubicaciones,
+  estadoGlobal,
   estadoRecoleccion,
   estadoEnvio,
   recoleccionActiva,
@@ -93,6 +115,7 @@ export default function MarcajeTab({
   const [alert, setAlert]               = useState(null);
   const [loadingEntrada, setLoadingEntrada] = useState(false);
   const [loadingSalida, setLoadingSalida]   = useState(false);
+  const [motivoDemora, setMotivoDemora] = useState(null);
 
   const timerRef = useRef(null);
 
@@ -126,6 +149,23 @@ export default function MarcajeTab({
   }, [estadoEnvio, ubicaciones, tipo]);
 
   const finJornada = jornadaFinalizada;
+
+  const ultimaFechaMarcaje = estadoGlobal?.fecha_hora ? new Date(estadoGlobal.fecha_hora) : null;
+  const minutosDesdeUltimoMarcaje = ultimaFechaMarcaje
+    ? Math.floor((Date.now() - ultimaFechaMarcaje.getTime()) / 60000)
+    : 0;
+  const requiereMotivoDemora =
+    tipo === "recoleccion" &&
+    !finJornada &&
+    !recoleccionActiva &&
+    !enviosActivo &&
+    !almuerzoActivo &&
+    ["salida", "fin_jornada"].includes(estadoGlobal?.tipo_marcaje) &&
+    minutosDesdeUltimoMarcaje >= 10;
+
+  useEffect(() => {
+    if (!requiereMotivoDemora) setMotivoDemora(null);
+  }, [requiereMotivoDemora]);
 
   // ── ubicEsperada: restricción de próxima acción ──────────────────────────
   // Recolección: si el último marcaje fue "salida", la próxima entrada debe
@@ -245,6 +285,14 @@ export default function MarcajeTab({
         );
         return;
       }
+      if (requiereMotivoDemora && !motivoDemora) {
+        showAlert(
+          "Seleccione el motivo de demora antes de iniciar el viaje",
+          "warning",
+          0,
+        );
+        return;
+      }
     }
 
     // Envíos salida: debe marcar salida en la misma ubicación donde entró
@@ -269,6 +317,7 @@ export default function MarcajeTab({
         ubicacionId: ubicId,
         tipoMarcaje,
         tipoActividad: tipo,
+        motivoDemora: motivoDemora?.value || null,
       });
 
       setter(false);
@@ -285,6 +334,7 @@ export default function MarcajeTab({
         showAlert(msg, "success");
         setUbicacion(null);
         setSubUbicacion(null);
+        setMotivoDemora(null);
         onMarcajeOk();
       } else {
         showAlert(result.error, "error", 0);
@@ -450,6 +500,31 @@ export default function MarcajeTab({
           <div className="ubicacion-esperada-banner">
             <i className="fa-solid fa-circle-info" style={{ marginTop: 2 }} />
             <span>No hay destinos de envío configurados para su zona</span>
+          </div>
+        )}
+
+        {requiereMotivoDemora && (
+          <div style={{ marginTop: 16 }}>
+            <label className="section-title">
+              <i className="fa-solid fa-clock" />
+              Motivo de demora
+            </label>
+            <div style={{ marginTop: 8 }}>
+              <Select
+                options={motivosDemora}
+                value={motivoDemora}
+                onChange={setMotivoDemora}
+                placeholder="Seleccione el motivo de demora"
+                isClearable={false}
+                isDisabled={selectDeshabilitado}
+                styles={selectStyles}
+                menuPortalTarget={document.body}
+                menuPosition="fixed"
+              />
+              <div style={{ marginTop: 8, fontSize: 13, color: "var(--gray-600)" }}>
+                Han pasado {minutosDesdeUltimoMarcaje} minutos desde el último cierre.
+              </div>
+            </div>
           </div>
         )}
       </div>

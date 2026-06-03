@@ -375,6 +375,7 @@ async function _registrarMarcajeInterno(data) {
     tipo_actividad: tipoActividad,
     latitud: latitud || null,
     longitud: longitud || null,
+    motivo_demora: data.motivoDemora || null,
     // fecha_hora: omitida → DEFAULT now() en Supabase (hora del servidor)
   };
 
