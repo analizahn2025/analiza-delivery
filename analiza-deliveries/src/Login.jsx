@@ -10,13 +10,14 @@ export default function Login({ onLoginSuccess }) {
 
   const handleSubmit = async (e) => {
     e?.preventDefault();
-    if (!dni.trim() || !password) {
+    const dniNormalizado = dni.replace(/\D/g, "");
+    if (!dniNormalizado || !password) {
       setError("Completa todos los campos");
       return;
     }
     setLoading(true);
     setError("");
-    const result = await login(dni.trim(), password);
+    const result = await login(dniNormalizado, password);
     setLoading(false);
     if (result.success) {
       onLoginSuccess(result.user);
@@ -103,7 +104,7 @@ export default function Login({ onLoginSuccess }) {
               <input
                 type="text"
                 value={dni}
-                onChange={(e) => setDni(e.target.value)}
+                onChange={(e) => setDni(e.target.value.replace(/\D/g, ""))}
                 placeholder="ID del empleado"
                 autoComplete="off"
                 inputMode="numeric"

@@ -20,7 +20,8 @@ function conTimeout(promesa, ms = 10000) {
 }
 
 export async function login(dni, password) {
-  const email = `${dni}@motoristas.local`;
+  const dniNormalizado = String(dni || "").replace(/\D/g, "");
+  const email = `${dniNormalizado}@motoristas.local`;
 
   let authData, authError;
   try {
@@ -36,6 +37,20 @@ export async function login(dni, password) {
   }
 
   if (authError || !authData.user) {
+    const { data: perfilExistente } = await supabase
+      .from("usuarios")
+      .select("id")
+      .eq("dni", dniNormalizado)
+      .maybeSingle();
+
+    if (perfilExistente) {
+      return {
+        success: false,
+        error:
+          "El perfil existe, pero Supabase Auth rechazó la contraseña. Restablece la contraseña del usuario de Auth.",
+      };
+    }
+
     return { success: false, error: "Credenciales inválidas" };
   }
 
